@@ -104,6 +104,21 @@ bool sequenceMatch(uchar_t rxBuf[], uchar_t c2, int shift, int ind, int seq_ind,
   return false;
 }
 
+void printMessage(uchar_t buf[], int ind, int buflen, int shift) {
+  uchar_t c1 = buf[ind];
+  uchar_t c2 = buf[ind+1];
+  ind += 2;
+  printf("\nPayload:\n");
+  while(ind < buflen) {
+    c1 |= (c2 >> (8-shift));
+    c2 <<= shift;
+    printf("%c", c1);
+    c1 = c2;
+    c2 = buf[ind];
+    ind++;
+  }
+}
+
 bool parseData(int conf) {
   bool sync_match_complete = false;;
   uchar_t rxBuffer[FILE_SIZE];
@@ -137,11 +152,12 @@ bool parseData(int conf) {
           //printf("\nfile_ptr:%c %x match_index: %d",rxBuffer[j], rxBuffer[j], match_index);
           //printf("\n*******DONE:shift:%d Last match index: %d, char: %x %c, payload start char:%c %x \n",
           //       j,match_index, c1, c1, rxBuffer[payload_index], rxBuffer[payload_index]);
-          printf("\nSync field matched from:%x", c1);
-          char payload[payload_len];
+          printf("\nSync field matched from:%x shift:%d", c1, i);
+          uchar_t payload[payload_len];
           memcpy(payload, &rxBuffer[payload_index], payload_len);
           payload[payload_len] = '\0';
-          printf("\nPayload:%s", payload);
+          payload[payload_len + 1] = '\0';
+          printMessage(payload, 0, payload_len + 2, i);
           break;
         }
         c1 = (c1 << 1) | (c2 >> 7);
