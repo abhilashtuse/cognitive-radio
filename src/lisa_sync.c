@@ -14,6 +14,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#define DEBUG 1
 #define FILE_SIZE 128 //128 bytes(1k)
 #define SYNC_BYTES 32
 #define file_path "mytestdata.txt"
@@ -55,6 +56,105 @@ void printFile() {
     printf("%x %c\t", c, c);
   }
   fclose(fp);
+}
+
+/**
+ * scrambling() - Scramble message in order to remove long “1s” or “0s”
+ * because they tend to lose timing
+ * @order:	Scrambling order.
+ * @data: Original message to be scrambled.
+ * @out: Output buffer to store scrambled message.
+ * @len: Length of original message.
+ *
+ */
+void scrambling(int order, uchar_t in_char, uchar_t *out_char, int len) {
+    bool dx, dy;
+    uchar_t debug_dx[100], debug_dy[100];
+    bool data[8];
+    for (int i = 0; i < 8; i++) {
+        if ((in_char >> i) & 1)
+            data[i] = 1;
+        else
+            data[i] = 0;
+    }
+    for (int i = 0; i < len; i++) {
+        if (i >= ((order / 2) + 1))
+            dx = out[i - ((order / 2) + 1)];
+        else
+            dx = 0;
+        if (i >= order)
+            dy = out[i - order];
+        else
+            dy = 1;
+        debug_dx[i] = dx;
+        debug_dy[i] = dy;
+        out[i] = data[i] ^ dx ^ dy;
+    }
+#if DEBUG
+    printf("\nScrambling:");
+    printf("\nInput: ");
+    for (int i = 0; i < len; i++) {
+        printf("%c ", data[i]);
+    }
+    printf("\nD%dT1:  ", (order / 2) + 1);
+    for (int i = 0; i < len; i++) {
+        printf("%c ", debug_dx[i]);
+    }
+    printf("\nD%dT1:  ", order);
+    for (int i = 0; i < len; i++) {
+        printf("%c ", debug_dy[i]);
+    }
+    printf("\nOutput:");
+    for (int i = 0; i < len; i++) {
+        printf("%c ", out[i]);
+    }
+#endif
+}
+
+/**
+ * descrambling() - Descramble received payload in order to receive original payload
+ * @order:	Scrambling order.
+ * @data: Received payload.
+ * @out: Output buffer.
+ * @len: Length of received payload.
+ *
+ */
+void descrambling(int order, uchar_t data[], uchar_t out[], int len) {
+    uchar_t dx, dy;
+    uchar_t debug_dx[100], debug_dy[100];
+    for (int i = 0; i < len; i++) {
+        if (i >= ((order / 2) + 1))
+            dx = data[i - ((order / 2) + 1)];
+        else
+            dx = '0';
+        if (i >= order)
+            dy = data[i - order];
+        else
+            dy = '0';
+        debug_dx[i] = dx;
+        debug_dy[i] = dy;
+        out[i] = data[i] ^ dx ^ dy;
+    }
+#if DEBUG
+    printf("\nDescrambling:");
+    printf("\ndata:  ");
+    for (int i = 0; i < len; i++) {
+        printf("%c ", data[i]);
+    }
+    printf("\nD%dT1:  ", (order / 2) + 1);
+    for (int i = 0; i < len; i++) {
+        printf("%c ", debug_dx[i]);
+    }
+    printf("\nD%dT1:  ", order);
+    for (int i = 0; i < len; i++) {
+        printf("%c ", debug_dy[i]);
+    }
+    printf("\nOutput:");
+    for (int i = 0; i < len; i++) {
+        printf("%c ", out[i]);
+    }
+#endif
+
 }
 
 /**
@@ -217,6 +317,12 @@ int main(void) {
   int corrupt_per, conf_level;
   payload_len = strlen((const char*)message);
   srand(time(NULL));
+  uchar_t sout[100] = "";
+  uchar_t dout[100] = "";
+
+  scrambling(5, message, sout, payload_len);
+  descrambling(5, sout, dout, strlen(sout));
+  return 0;
   createFile();
   printf("what percentage of sync field is corrupted? (0-100):");
   scanf("%d", &corrupt_per);
