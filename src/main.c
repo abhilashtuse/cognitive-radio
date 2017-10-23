@@ -29,7 +29,8 @@ void transmit(uchar_t rxBuffer[], int buf_len, int order) {
 	int cnt = 0;
 	for (int i = 0; i < buf_len; i++) {
 		for (int j = 0; j < 8; j++) {
-			if ((rxBuffer[i] >> j) & 1)
+			//if ((rxBuffer[i] >> j) & 1) // LSB-MSB
+			if (rxBuffer[i] >> (7-j) & 1) // MSB-LSB
 				bit_buf[cnt] = 1;
 			else
 				bit_buf[cnt] = 0;
@@ -40,9 +41,7 @@ void transmit(uchar_t rxBuffer[], int buf_len, int order) {
 	payload_len = cnt/8 - SYNC_BYTES;
 	//printf("\npayload len:%d\nbefore_payload:", payload_len);
 	bool data[payload_len * 8], sout[payload_len * 8];
-	/*for (int i = SYNC_BYTES*8-1; i>SYNC_BYTES*8-17; i--) {
-		printf("%d", bit_buf[i]);
-	}*/
+
 	for (int i = SYNC_BYTES*8, j = 0; i < cnt; i++, j++) {
 		data[j] = bit_buf[i];
 	}
@@ -53,53 +52,16 @@ void transmit(uchar_t rxBuffer[], int buf_len, int order) {
 		bit_buf[i] = sout[j];
 	}
 
-	/*for (int i = SYNC_BYTES*8, j = 0; i < cnt; i++, j++) {
-			data[j] = bit_buf[i];
-	}
-	descrambling(5, data, sout, sizeof(data)/sizeof(bool));*/
-
-
-
-	/*printf("sending:\n");
-	for (int i = 0; i < cnt; i++) {
-		if (bit_buf[i])
-			printf("1,");
-		else
-			printf("0,");
-	}*/
 	for (int i = 0; i < cnt; i++) {
 		if (bit_buf[i]) {
-			//printf("1");
 			setGPIO(2, 7);
-			//clearGPIO(2, 12);
-			//setGPIO(2, 11);
 		} else {
-			//printf("0");
 			clearGPIO(2, 7);
-			//clearGPIO(2, 11);
-			//setGPIO(2, 12);
 		}
-		delay(10);
+		delay(1);
 	}
 	printf("\nTx complete..");
 }
-/* Earlier transmit:
- * void transmit(uchar_t rxBuffer[], int buf_len) {
- 	GPIOinitOut(2, 7); // Set Tx as output
-
- 	for (int i = 0; i < buf_len; i++) {
- 		for (int j = 0; j < 8; j++) {
- 			if (((rxBuffer[i] >> j) & 1)) {
- 				printf("1");
- 				setGPIO(2, 7);
- 			} else {
- 				printf("0");
- 				clearGPIO(2, 7);
- 			}
- 			delay(2);
- 		}
- 	}
-}*/
 
 void bufferManipulator(bool buffer[], unsigned char bufferNew[] ,int n){
 	int count=0;
@@ -114,24 +76,7 @@ void bufferManipulator(bool buffer[], unsigned char bufferNew[] ,int n){
 }
 
 void receive(int conf, int order, int payload_len) {
-	//LPC_GPIO2->FIODIR &= ~(1<<11);///set rx pin as i/p
-	GPIOinitIn(2, 8); // Set switch as input
-
-	/*
-	 * Earlier receive
-	int count=0, payload_index = 0;
-	unsigned char buffer[128];
-
-	while(count < 128*8){
-		unsigned char byte=0;
-		for(int i=0;i<8;i++){
-			if(LPC_GPIO2-> FIOPIN & (1<<11)){
-				byte |=(1<<i);
-			}
-			delay(2);
-		}
-		buffer[count++]=byte;
-	}*/
+	GPIOinitIn(2, 8); // Set Rx as Input
 
 	int count = 0;
 //	bool buffer[RECEIVE_COUNT*8] = {0,0,0,0,0,1,0,1,1,0,0,0,0,1,0,1,0,1,0,0,0,1,0,1,1,1,0,0,0,1,0,1,0,0,1,0,0,1,0,1,1,0,1,0,0,1,0,1,0,1,1,0,0,1,0,1,1,1,1,0,0,1,0,1,0,0,0,1,0,1,0,1,1,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1,0,1,0,1,0,0,1,1,0,1,0,1,1,0,1,1,0,1,0,1,0,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,0,0,0,0,1,0,1,0,1,0,0,0,1,0,1,0,0,1,0,0,1,0,1,0,1,1,0,0,1,0,1,0,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,1,1,0,1,0,1,0,1,1,1,0,1,0,1,0,0,0,0,1,1,0,1,0,1,0,0,1,1,0,1,0,0,1,0,1,1,0,1,0,1,1,0,1,1,0,1,0,0,0,1,1,1,0,1,0,1,0,1,1,1,0,1,0,0,1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,1,1,0,1,0,0,0,1,0,0,1,0,0,0,0,0,1,0,1,0,1,1,0,1,0,1,0,0,1,1,1,0,1,0,1,0,0,0,0,0,0,0,1,1,0,1,0,1,1,0,0,0,1,0,0,1,1,1,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,0,0,1,0,0,0,0,0,0,1,1,0,1,1,1,1,1,1,0,1,1,1,0,0,0,1,1,0,1,0,1,1,0,1,1,0,0,1,1,0,1,1,0,0,1,0,0,1,0,1,1,1,0,0,1,1,1,0,1,1,1,1,0,0,0,0,0,1,1,1,1,0,0,1,1,1,1,1,0,1,0,1,1,0,0,1,0,0,1,0,1,1,1,0,0,1,1,0,1,1,0,0,0,0,1,0,0,0,1,1,1,0,1,1,1,0,1,0,0,1,0,0,0,0,1,1,1,0,1,0,1,0,1,0,1,1,0,1,0,0,1,1,1,0,1,1,1,0,0,1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,0,0,1,1,1,1,0,1,0,0,1,0,1};
@@ -183,31 +128,30 @@ int main(void) {
 	printf("\nread_bytes:%d", read_bytes);
 	fclose(fp);
 
-	int order = 5, conf = 5;
-    /*int ch;
-    printf("Enter confidence level:");
-    scanf("%d", &conf);
-    printf("Enter scrambling order:");
-    scanf("%d", &order);
-    printf("\n1. Transmit\n2. Receive\nEnter choice:");
-    scanf("%d", &ch);
-    switch(ch) {
-    	case 1:
-			transmit(buffer, file_len, order);
-    		break;
-    	case 2:
-    		receive(conf, order);
-    		break;
-    	default:
-    		printf("wrong choice");
-    }*/
-	int st;
-	printf("\nstart program:");
-	scanf("%d", &st);
-	transmit(buffer, file_len, order);
-	//receive(conf, order, file_len - SYNC_BYTES);
+	bool flag = true;
+	while (flag) {
+		int order = 5, conf = 5;
+		int ch;
+		printf("\nEnter scrambling order:");
+		scanf("%d", &order);
+		printf("\n1. Transmit\n2. Receive\nEnter choice:");
+		scanf("%d", &ch);
+		switch(ch) {
+			case 1:
+				transmit(buffer, file_len, order);
+				break;
+			case 2:
+				printf("\nEnter confidence level:");
+				scanf("%d", &conf);
+				receive(conf, order, file_len - SYNC_BYTES);
+				break;
+			case 3:
+				flag = false;
+				break;
+			default:
+				printf("\nwrong choice");
+		}
+    }
     printf("\nDone");
     return 0 ;
 }
-
-

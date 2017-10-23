@@ -17,7 +17,6 @@
 
 #define DEBUG 0
 static uchar_t message[] = "Hello, SJSU_CMPE245_Abhilash_9326";
-//static uchar_t message[] = "Hello";
 static uint8_t payload_len;
 static uchar_t sync_field[SYNC_BYTES] ={0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7,
                                         0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF,
@@ -216,7 +215,8 @@ bool parseData(int conf, uchar_t rxBuffer[], int buf_len, int *final_index) {
           int payload_index = j - 2 + SYNC_BYTES - match_index;
           // printf("\nSync field matched from:%x shift:%d", c1, i);
           *final_index = payload_index * 8 + i;
-          /*uchar_t payload[payload_len];
+          /*// this is to directly print received payload
+          uchar_t payload[payload_len];
           memcpy(payload, &rxBuffer[payload_index], payload_len);
           payload[payload_len] = '\0';
           payload[payload_len + 1] = '\0';
