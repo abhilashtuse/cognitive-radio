@@ -1,0 +1,26 @@
+(1) FBW: Frequency band ( lower frequency bands below 525
+MHz, or the upper frequency bands above 779 MHz, pp. 106);
+
+(2) WFR: Working frequency range;
+
+(3) BWD: Bandwidth;
+
+(4) CDR: Coding rate (bit rate settings, pp. 46);
+
+(5) SPD: Spreading factor;
+
+(6) FHSS: Frequency hopping spread spectrum (hoping, pp. 59);
+
+(7) CRC: error correction and detection based technique (pp. 77)
+
+(8) ADR: address based communication (pp. 74 and 77);
+
+(9) SCR: scrambling (whitening, pp. 79);
+
+(10) BCN: Beacon Tx Mode (pp. 79);
+
+(11) PWR: Tx power (high power, pp. 84);
+
+(12) RSSI: Relative signal strength indicator (pp. 86) ;
+
+(13) CNL: Channel filter (pp. 88).

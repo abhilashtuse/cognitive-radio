@@ -1,0 +1,12 @@
+Name lora  TX1
+GND    4    39
+RFI_LF 1    23
+VR_ANA 2     1
+MOSI   3    19
+MISO   8    21
+CS     7    37
+gpio   10   29
+RFO_HF 22   17
+Vbat2  24   20
+GND    32   14
+VDD    34    																																																																				
